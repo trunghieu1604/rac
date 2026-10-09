@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Car Dashboard OS</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#16213a; --card2:#22325a; --text:#ffffff; --muted:#d3deec;
+    --accent:#7dd3fc; --btn:#2563eb; --warn:#b45309; --green:#6ee7b7; --red:#fca5a5; --yellow:#fde047; --yt:#ff5a5a; --border:#44588a;
+    --c-sun:#fde047; --c-partly:#fcd34d; --c-cloud:#d3deec; --c-rain:#7dd3fc; --c-snow:#e0f2fe; --c-bolt:#fde047;
+  }
+  body.light{
+    --bg:#e3eaf5; --card:#ffffff; --card2:#e6edf8; --text:#050b18; --muted:#273449;
+    --accent:#1d4ed8; --btn:#1d4ed8; --warn:#92400e; --green:#047857; --red:#b91c1c; --yellow:#8a3b05; --yt:#b91c1c; --border:#9fb0cc;
+    --c-sun:#b45309; --c-partly:#b45309; --c-cloud:#475569; --c-rain:#1d4ed8; --c-snow:#0369a1; --c-bolt:#8a5a00;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;transition:background .3s,color .3s}
+  button{font-family:inherit;color:inherit;cursor:pointer;border:none}
+  .ic{width:1em;height:1em;vertical-align:-.14em;flex-shrink:0}
+
+  #pages{display:flex;width:200%;height:100%;transition:transform .35s cubic-bezier(.4,0,.2,1);touch-action:pan-y}
+  .page{width:50%;height:100%;padding:1.6vmin;position:relative}
+
+  /* ---------- PAGE 1 ---------- */
+  #grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1.6vmin;height:100%}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:3vmin;padding:2.4vmin;
+    display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;position:relative}
+  .label{font-size:2.3vmin;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    display:flex;align-items:center;gap:1vmin;flex-shrink:0}
+
+  #clock-card{align-items:center;justify-content:center;text-align:center}
+  #time{font-size:min(17vmin,20vw);font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+  #time .sep{color:var(--accent)}
+  #time small{font-size:.35em;color:var(--muted);margin-left:.15em;font-weight:700}
+  #date{font-size:3.2vmin;font-weight:700;color:var(--muted);margin-top:1.4vmin;text-transform:uppercase;letter-spacing:.08em}
+  #lunar-today{font-size:3vmin;font-weight:700;color:var(--yellow);margin-top:.8vmin}
+
+  /* weather */
+  #weather-card .now{display:flex;align-items:center;justify-content:center;gap:3vmin;flex:0 0 auto;margin:1vmin 0}
+  #w-icon{font-size:11vmin;color:var(--c-rain);display:flex}
+  #w-temp{font-size:13vmin;font-weight:800;line-height:1}
+  #w-temp span{font-size:.4em;color:var(--muted)}
+  #w-desc{text-align:center;font-size:2.8vmin;font-weight:700;color:var(--accent)}
+  #w-loc{text-align:center;font-size:2.1vmin;color:var(--muted);margin-top:.4vmin}
+  #w-extra{display:flex;justify-content:center;gap:3vmin;font-size:2.3vmin;color:var(--muted);margin-top:.8vmin}
+  #forecast{display:grid;grid-template-columns:repeat(5,1fr);gap:.9vmin;margin-top:auto;padding-top:1vmin}
+  .fc{background:var(--card2);border-radius:1.6vmin;padding:.8vmin .4vmin;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.2vmin}
+  .fc b{font-size:1.9vmin}.fc em{font-style:normal;font-size:1.7vmin;color:var(--muted)}
+  .fc .ic{font-size:3.2vmin;margin:.2vmin 0}.fc div{font-size:1.8vmin;font-weight:700}.fc div s{text-decoration:none;color:var(--muted);font-weight:400}
+
+  /* timer */
+  #timer-card .head{display:flex;justify-content:space-between;align-items:center}
+  #t-status{font-size:2vmin;font-weight:800;background:var(--card2);color:var(--muted);padding:.6vmin 1.6vmin;border-radius:1vmin}
+  .ring-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;margin:.6vmin 0}
+  .ring-wrap svg{height:100%;max-height:24vmin;aspect-ratio:1;transform:rotate(-90deg)}
+  #ring{transition:stroke-dashoffset 1s linear}
+  #cd{position:absolute;font-size:5.6vmin;font-weight:800;font-variant-numeric:tabular-nums}
+  .tbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:1vmin;margin-bottom:1vmin}
+  .tbtns button{background:var(--card2);border:1px solid var(--border);border-radius:1.6vmin;padding:1.4vmin 0;font-size:2.4vmin;font-weight:800}
+  .tbtns button:active{transform:scale(.95)}
+  .tbtns .rst{color:var(--red)}
+  #t-main{background:var(--btn);color:#fff;border-radius:2vmin;padding:1.9vmin;font-size:2.7vmin;font-weight:800;display:flex;align-items:center;justify-content:center;gap:1.2vmin}
+  #t-main:active{transform:scale(.98)}
+
+  /* calendar */
+  #cal-card{padding:2vmin}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1vmin}
+  .cal-head button{width:5.6vmin;height:5.6vmin;border-radius:1.4vmin;background:var(--card2);border:1px solid var(--border);font-size:2.6vmin;display:flex;align-items:center;justify-content:center}
+  #cal-title{font-size:2.9vmin;font-weight:800;text-align:center;line-height:1.15}
+  #cal-title small{display:block;font-size:1.9vmin;color:var(--yellow);font-weight:700}
+  .dow,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:.6vmin;text-align:center}
+  .dow div{font-size:2vmin;font-weight:800;color:var(--muted);padding:.4vmin 0}
+  .dow div:first-child{color:var(--red)}
+  .days{flex:1;min-height:0;grid-auto-rows:1fr}
+  .day{border-radius:1.2vmin;background:var(--card2);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;min-height:0}
+  .day b{font-size:2.9vmin;font-weight:800}
+  .day span{font-size:1.9vmin;font-weight:600;color:var(--muted)}
+  .day.sun b{color:var(--red)}
+  .day.first span{color:var(--yellow);font-weight:800}
+  .day.empty{background:transparent}
+  .day.today{background:var(--btn);color:#fff}
+  .day.today b,.day.today span{color:#fff}
+
+  /* buttons inside clock card */
+  .fab{position:absolute;z-index:20;width:7vmin;height:7vmin;border-radius:50%;background:var(--card2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:3.4vmin}
+  .fab:active{transform:scale(.92)}
+  #theme-btn{top:2vmin;right:2vmin;color:var(--yellow)}
+  #next-btn{bottom:2vmin;right:2vmin;color:var(--yt)}
+  #dots{position:absolute;bottom:.5vmin;left:50%;transform:translateX(-50%);display:flex;gap:1vmin;z-index:25}
+  #dots i{width:1.2vmin;height:1.2vmin;border-radius:50%;background:var(--muted);opacity:.5;transition:.3s}
+  #dots i.on{background:var(--accent);opacity:1;width:3vmin;border-radius:1vmin}
+
+  /* ---------- PAGE 2 YOUTUBE ---------- */
+  #page2{display:flex;flex-direction:column;gap:1.4vmin}
+  .yt-bar{display:flex;gap:1.2vmin;align-items:center;flex-shrink:0}
+  .yt-bar .back{width:7vmin;height:7vmin;border-radius:2vmin;background:var(--card);border:1px solid var(--border);font-size:3.2vmin;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .yt-input{flex:1;display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:5vmin;padding:0 2.4vmin;height:7vmin}
+  .yt-input:focus-within{border-color:var(--accent)}
+  .yt-input input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:2.8vmin;min-width:0;user-select:text}
+  .yt-input button{background:none;font-size:3.2vmin;color:var(--muted);padding:0 1vmin;display:flex}
+  #yt-body{flex:1;min-height:0;display:flex;gap:1.4vmin}
+  #yt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1vmin}
+  #player-box{flex:1;min-height:0;background:#000;border-radius:2.4vmin;overflow:hidden;position:relative;border:1px solid var(--border)}
+  #player-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  #yt-msg{font-size:2vmin;color:var(--yellow);display:none;line-height:1.35}
+  #yt-side{width:34%;max-width:420px;overflow-y:auto;display:flex;flex-direction:column;gap:1vmin;touch-action:pan-y}
+  .res{display:flex;gap:1vmin;background:var(--card);border:1px solid var(--border);border-radius:1.8vmin;padding:.9vmin;cursor:pointer;align-items:center}
+  .res:active{transform:scale(.98)}
+  .res img{width:36%;border-radius:1.2vmin;flex-shrink:0;aspect-ratio:16/9;object-fit:cover;background:#000}
+  .res div{font-size:2vmin;font-weight:700;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .res.preset{padding:1.6vmin 1.8vmin;font-size:2.3vmin;font-weight:700;gap:1.2vmin}
+  .res.preset .ic{color:var(--yt);font-size:3.4vmin}
+  .side-title{font-size:2vmin;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:.4vmin .6vmin}
+  .res.cur{outline:2px solid var(--yellow)}
+  /* trang chủ YouTube */
+  #home{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;gap:1.2vmin;padding:1.8vmin;background:var(--bg);overflow:auto;text-align:left;touch-action:pan-y}
+  #home.open{display:flex}
+  #home h4{margin:1vmin 0 0;font-size:2vmin;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+  #home .hint{font-size:2.1vmin;color:var(--muted);line-height:1.5}
+  #homeTop{display:flex;gap:1vmin;align-items:center;justify-content:space-between;font-size:3vmin;font-weight:800;flex-wrap:wrap}
+  #home button{background:var(--card);border:1px solid var(--border);border-radius:1.6vmin;padding:1.2vmin 2vmin;font-size:2.2vmin;font-weight:700}
+  .chips{display:flex;gap:1vmin;flex-wrap:wrap}
+  .chips button{flex:1 1 18vmin;padding:1.8vmin 2vmin!important;font-size:2.5vmin!important}
+  #home .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(24vmin,1fr));gap:1.2vmin}
+  .tile{cursor:pointer;background:var(--card);border:1px solid var(--border);border-radius:1.6vmin;overflow:hidden;font-size:2vmin;line-height:1.3;color:var(--text)}
+  .tile:active{transform:scale(.98)}
+  .tile img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#222}
+  .tile div{padding:.8vmin 1vmin;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #edge{position:absolute;left:0;top:10vmin;bottom:0;width:4.5vmin;z-index:15;
+    background:linear-gradient(90deg,rgba(59,130,246,.35),transparent);border-radius:0 2vmin 2vmin 0;touch-action:none}
+
+  @media (max-aspect-ratio:1/1){
+    #grid{grid-template-columns:1fr;grid-template-rows:repeat(4,1fr)}
+    #yt-body{flex-direction:column}#yt-side{width:100%;max-width:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;height:20vmin;flex:0 0 auto}
+    .res{min-width:48vw}
+  }
+</style>
+</head>
+<body>
+
+<div id="pages">
+  <!-- ================= PAGE 1 ================= -->
+  <section class="page" id="page1">
+    <div id="grid">
+      <div class="card" id="clock-card">
+        <button class="fab" id="theme-btn" onclick="toggleTheme()" title="Đổi giao diện"><i data-ic="theme"></i></button>
+        <button class="fab" id="next-btn" onclick="goPage(1)" title="YouTube"><i data-ic="youtube"></i></button>
+        <div id="time">00<span class="sep">:</span>00</div>
+        <div id="date">...</div>
+        <div id="lunar-today"></div>
+      </div>
+
+      <div class="card" id="weather-card">
+        <div class="label"><i data-ic="partly"></i> Thời tiết</div>
+        <div class="now"><div id="w-icon"></div><div id="w-temp">--<span>°C</span></div></div>
+        <div id="w-desc">Đang lấy vị trí...</div>
+        <div id="w-loc"><i data-ic="pin"></i> <span id="w-loc-name">...</span></div>
+        <div id="w-extra"></div>
+        <div id="forecast"></div>
+      </div>
+
+      <div class="card" id="timer-card">
+        <div class="head">
+          <div class="label"><i data-ic="bell"></i> Báo thức / Hẹn giờ</div>
+          <div id="t-status">SẴN SÀNG</div>
+        </div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="70" stroke="var(--card2)" stroke-width="10" fill="none"/>
+            <circle id="ring" cx="80" cy="80" r="70" stroke="var(--accent)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="440"/>
+          </svg>
+          <div id="cd">00:00:00</div>
+        </div>
+        <div class="tbtns">
+          <button onclick="addTime(15)">+15p</button>
+          <button onclick="addTime(30)">+30p</button>
+          <button onclick="addTime(60)">+1g</button>
+          <button class="rst" onclick="resetTimer()">Xóa</button>
+        </div>
+        <button id="t-main" onclick="mainBtn()"></button>
+      </div>
+
+      <div class="card" id="cal-card">
+        <div class="cal-head">
+          <button onclick="shiftMonth(-1)"><i data-ic="left"></i></button>
+          <div id="cal-title" onclick="goToday()"></div>
+          <button onclick="shiftMonth(1)"><i data-ic="right"></i></button>
+        </div>
+        <div class="dow"><div>CN</div><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div></div>
+        <div class="days" id="days"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PAGE 2 ================= -->
+  <section class="page" id="page2">
+    <div class="yt-bar">
+      <button class="back" onclick="goPage(0)" title="Quay lại"><i data-ic="left"></i></button>
+      <button class="back" onclick="toggleHome()" title="Trang chủ YouTube"><i data-ic="home"></i></button>
+      <div class="yt-input">
+        <input id="q" type="text" placeholder="Tìm bài hát hoặc dán link YouTube..." onkeydown="if(event.key==='Enter')doSearch()">
+        <button onclick="doSearch()"><i data-ic="search"></i></button>
+      </div>
+    </div>
+    <div id="yt-body">
+      <div id="yt-main">
+        <div id="yt-msg"></div>
+        <div id="player-box"><iframe id="yt" title="YouTube" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><div id="home"></div></div>
+      </div>
+      <div id="yt-side"></div>
+    </div>
+    <div id="edge"></div>
+  </section>
+</div>
+
+<div id="dots"><i class="on"></i><i></i></div>
+
+<script>
+/* ================= Icons (SVG nội bộ, không cần mạng) ================= */
+const ICONS={
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  cloud:'<path d="M7 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5 4.8 4.8 0 0 1 17.5 19z"/>',
+  partly:'<path d="M12 2v1.5M4.6 4.6l1 1M2 10h1.5M19.4 4.6l-1 1"/><circle cx="12" cy="9" r="3"/><path d="M7.5 20a3.5 3.5 0 0 1-.3-7A4.7 4.7 0 0 1 16.4 13 3.5 3.5 0 0 1 16 20z"/>',
+  rain:'<path d="M7 14a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 5.5 4.5 4.5 0 0 1 17.5 14z"/><path d="M8 17l-1 4M12 17l-1 4M16 17l-1 4"/>',
+  bolt:'<path d="M7 13a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 4.5 4.5 4.5 0 0 1 17.5 13z"/><path d="M12.5 11l-2.5 5h4l-2.5 5"/>',
+  fog:'<path d="M4 8h16M6 12h12M4 16h16M7 20h10"/>',
+  snow:'<path d="M12 3v18M4.5 7.5l15 9M4.5 16.5l15-9"/>',
+  drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  wind:'<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/>',
+  pin:'<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+  bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',
+  play:'<path d="M7 4l13 8-13 8z" fill="currentColor"/>',
+  pause:'<path d="M7 4h4v16H7zM13 4h4v16h-4z" fill="currentColor"/>',
+  left:'<path d="M15 5l-7 7 7 7"/>',
+  right:'<path d="M9 5l7 7-7 7"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  youtube:'<rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/>',
+  theme:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',
+  warn:'<path d="M12 3l10 18H2zM12 10v5M12 18v.5"/>',
+  home:'<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>'
+};
+const svg=(n)=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`;
+function hydrateIcons(root=document){ root.querySelectorAll('i[data-ic]').forEach(el=>{ el.outerHTML=svg(el.dataset.ic); }); }
+hydrateIcons();
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:v }catch(e){ return d } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){} }
+};
+
+/* ================= Pages / swipe ================= */
+let page = 0;
+function goPage(n){
+  page = n;
+  $('pages').style.transform = `translateX(${-50*n}%)`;
+  document.querySelectorAll('#dots i').forEach((d,i)=>d.classList.toggle('on',i===n));
+  if(n===1) initYT();
+}
+(function swipe(){
+  let sx=0, sy=0, active=false;
+  const start=(x,y)=>{sx=x;sy=y;active=true};
+  const end=(x,y)=>{
+    if(!active) return; active=false;
+    const dx=x-sx, dy=y-sy;
+    if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.3){
+      if(dx<0 && page===0) goPage(1);
+      else if(dx>0 && page===1) goPage(0);
+    }
+  };
+  const root=$('pages');
+  root.addEventListener('touchstart',e=>start(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  root.addEventListener('touchend',e=>end(e.changedTouches[0].clientX,e.changedTouches[0].clientY),{passive:true});
+  let md=false;
+  root.addEventListener('mousedown',e=>{md=true;start(e.clientX,e.clientY)});
+  window.addEventListener('mouseup',e=>{ if(md){md=false;end(e.clientX,e.clientY)} });
+  window.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if(e.key==='ArrowRight'&&page===0) goPage(1);
+    if(e.key==='ArrowLeft'&&page===1) goPage(0);
+  });
+})();
+
+/* ================= Theme ================= */
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  store.set('theme', document.body.classList.contains('light')?'light':'dark');
+}
+if(store.get('theme','dark')==='light') document.body.classList.add('light');
+
+/* ================= Âm lịch (Hồ Ngọc Đức, UTC+7) ================= */
+const PI=Math.PI, TZ=7, INT=Math.floor;
+function jdFromDate(dd,mm,yy){
+  const a=INT((14-mm)/12), y=yy+4800-a, m=mm+12*a-3;
+  return dd+INT((153*m+2)/5)+365*y+INT(y/4)-INT(y/100)+INT(y/400)-32045;
+}
+function NewMoon(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,dr=PI/180;
+  let Jd1=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3;
+  Jd1+=0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);
+  const M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3;
+  const Mpr=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3;
+  const F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3;
+  let C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M);
+  C1-=0.4068*Math.sin(Mpr*dr)+0.0161*Math.sin(dr*2*Mpr);
+  C1-=0.0004*Math.sin(dr*3*Mpr);
+  C1+=0.0104*Math.sin(dr*2*F)-0.0051*Math.sin(dr*(M+Mpr));
+  C1-=0.0074*Math.sin(dr*(M-Mpr))-0.0004*Math.sin(dr*(2*F+M));
+  C1-=0.0004*Math.sin(dr*(2*F-M))+0.0006*Math.sin(dr*(2*F+Mpr));
+  C1+=0.0010*Math.sin(dr*(2*F-Mpr))+0.0005*Math.sin(dr*(2*Mpr+M));
+  const dt=T<-11?0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3:-0.000278+0.000265*T+0.000262*T2;
+  return Jd1+C1-dt;
+}
+function SunLongitude(jdn){
+  const T=(jdn-2451545.0)/36525,T2=T*T,dr=PI/180;
+  const M=357.52910+35999.05030*T-0.0001559*T2-0.00000048*T*T2;
+  const L0=280.46645+36000.76983*T+0.0003032*T2;
+  let DL=(1.914600-0.004817*T-0.000014*T2)*Math.sin(dr*M);
+  DL+=(0.019993-0.000101*T)*Math.sin(dr*2*M)+0.000290*Math.sin(dr*3*M);
+  let L=(L0+DL)*dr; L-=PI*2*INT(L/(PI*2)); return L;
+}
+const getNewMoonDay=k=>INT(NewMoon(k)+0.5+TZ/24);
+const getSunLongitude=d=>INT(SunLongitude(d-0.5-TZ/24)/PI*6);
+function getLunarMonth11(yy){
+  const off=jdFromDate(31,12,yy)-2415021, k=INT(off/29.530588853);
+  let nm=getNewMoonDay(k);
+  if(getSunLongitude(nm)>=9) nm=getNewMoonDay(k-1);
+  return nm;
+}
+function getLeapMonthOffset(a11){
+  const k=INT((a11-2415021.076998695)/29.530588853+0.5);
+  let last=0,i=1,arc=getSunLongitude(getNewMoonDay(k+i));
+  do{ last=arc; i++; arc=getSunLongitude(getNewMoonDay(k+i)); }while(arc!==last&&i<14);
+  return i-1;
+}
+function solar2lunar(dd,mm,yy){
+  const dayNumber=jdFromDate(dd,mm,yy);
+  const k=INT((dayNumber-2415021.076998695)/29.530588853);
+  let monthStart=getNewMoonDay(k+1);
+  if(monthStart>dayNumber) monthStart=getNewMoonDay(k);
+  let a11=getLunarMonth11(yy), b11=a11, lunarYear;
+  if(a11>=monthStart){ lunarYear=yy; a11=getLunarMonth11(yy-1); }
+  else { lunarYear=yy+1; b11=getLunarMonth11(yy+1); }
+  const lunarDay=dayNumber-monthStart+1;
+  const diff=INT((monthStart-a11)/29);
+  let lunarLeap=0, lunarMonth=diff+11;
+  if(b11-a11>365){
+    const leap=getLeapMonthOffset(a11);
+    if(diff>=leap){ lunarMonth=diff+10; if(diff===leap) lunarLeap=1; }
+  }
+  if(lunarMonth>12) lunarMonth-=12;
+  if(lunarMonth>=11&&diff<4) lunarYear-=1;
+  return {d:lunarDay,m:lunarMonth,y:lunarYear,leap:lunarLeap};
+}
+const CAN=['Giáp','Ất','Bính','Đinh','Mậu','Kỷ','Canh','Tân','Nhâm','Quý'];
+const CHI=['Tý','Sửu','Dần','Mão','Thìn','Tỵ','Ngọ','Mùi','Thân','Dậu','Tuất','Hợi'];
+const canChiYear=y=>CAN[(y+6)%10]+' '+CHI[(y+8)%12];
+
+/* ================= Clock ================= */
+const DOW_VN=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+function updateClock(){
+  const n=new Date();
+  const p=v=>String(v).padStart(2,'0');
+  $('time').innerHTML=`${p(n.getHours())}<span class="sep">:</span>${p(n.getMinutes())}<small>${p(n.getSeconds())}</small>`;
+  $('date').textContent=`${DOW_VN[n.getDay()]}, ${n.getDate()}/${n.getMonth()+1}/${n.getFullYear()}`;
+  const l=solar2lunar(n.getDate(),n.getMonth()+1,n.getFullYear());
+  $('lunar-today').textContent=`Âm lịch: ${l.d}/${l.m}${l.leap?' (nhuận)':''} • ${canChiYear(l.y)}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+/* ================= Calendar ================= */
+let cm=new Date().getMonth(), cy=new Date().getFullYear();
+function shiftMonth(n){ cm+=n; if(cm>11){cm=0;cy++} if(cm<0){cm=11;cy--} renderCal(); }
+function goToday(){ const t=new Date(); cm=t.getMonth(); cy=t.getFullYear(); renderCal(); }
+function renderCal(){
+  const first=new Date(cy,cm,1).getDay(), dim=new Date(cy,cm+1,0).getDate(), t=new Date();
+  const lm=solar2lunar(15,cm+1,cy);
+  $('cal-title').innerHTML=`THÁNG ${cm+1} / ${cy}<small>Âm lịch: tháng ${lm.m}${lm.leap?' nhuận':''} năm ${canChiYear(lm.y)}</small>`;
+  let html='';
+  for(let i=0;i<first;i++) html+='<div class="day empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const l=solar2lunar(d,cm+1,cy), wd=(first+d-1)%7;
+    const isToday=d===t.getDate()&&cm===t.getMonth()&&cy===t.getFullYear();
+    const cls=['day']; if(wd===0) cls.push('sun'); if(l.d===1) cls.push('first'); if(isToday) cls.push('today');
+    html+=`<div class="${cls.join(' ')}"><b>${d}</b><span>${l.d===1?l.d+'/'+l.m:l.d}</span></div>`;
+  }
+  $('days').innerHTML=html;
+  $('days').style.gridTemplateRows=`repeat(${Math.ceil((first+dim)/7)},1fr)`;
+}
+renderCal();
+
+/* ================= Thời tiết theo vị trí thực ================= */
+function fetchJSON(url,ms=10000){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
+  return fetch(url,{signal:c.signal}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).finally(()=>clearTimeout(t));
+}
+function gpsPosition(){
+  return new Promise((res,rej)=>{
+    if(!navigator.geolocation) return rej(new Error('no geo'));
+    navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude}),rej,{timeout:8000,maximumAge:5*60*1000,enableHighAccuracy:false});
+  });
+}
+async function ipPosition(){
+  try{ const j=await fetchJSON('https://ipwho.is/',7000); if(j.success!==false&&j.latitude) return {lat:j.latitude,lon:j.longitude,name:[j.city,j.region].filter(Boolean).join(', ')}; }catch(e){}
+  const j=await fetchJSON('https://ipapi.co/json/',7000);
+  return {lat:j.latitude,lon:j.longitude,name:[j.city,j.region].filter(Boolean).join(', ')};
+}
+async function placeName(lat,lon){
+  try{
+    const j=await fetchJSON(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`,7000);
+    return [j.locality||j.city,j.principalSubdivision].filter(Boolean).join(', ');
+  }catch(e){ return ''; }
+}
+async function getLocation(){
+  try{
+    const p=await gpsPosition(); p.name=await placeName(p.lat,p.lon); p.src='GPS';
+    store.set('loc',JSON.stringify(p)); return p;
+  }catch(e){}
+  try{
+    const p=await ipPosition(); p.src='IP';
+    if(!p.name) p.name=await placeName(p.lat,p.lon);
+    store.set('loc',JSON.stringify(p)); return p;
+  }catch(e){}
+  try{ const c=JSON.parse(store.get('loc','')); if(c&&c.lat) return c; }catch(e){}
+  return {lat:21.30,lon:105.66,name:'Bình Xuyên, Phú Thọ',src:'mặc định'};
+}
+function wmo(c){
+  if(c===0) return ['sun','var(--c-sun)','Trời quang'];
+  if(c<=2) return ['partly','var(--c-partly)','Ít mây'];
+  if(c===3) return ['cloud','var(--c-cloud)','Nhiều mây'];
+  if(c<=48) return ['fog','var(--c-cloud)','Sương mù'];
+  if(c<=57) return ['rain','var(--c-rain)','Mưa phùn'];
+  if(c<=67) return ['rain','var(--c-rain)','Mưa'];
+  if(c<=77) return ['snow','var(--c-snow)','Tuyết'];
+  if(c<=82) return ['rain','var(--c-rain)','Mưa rào'];
+  return ['bolt','var(--c-bolt)','Dông'];
+}
+const DOW_S=['CN','T2','T3','T4','T5','T6','T7'];
+async function loadWeather(){
+  try{
+    const loc=await getLocation();
+    $('w-loc-name').textContent=(loc.name||`${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}`)+(loc.src?` (${loc.src})`:'');
+    const j=await fetchJSON(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}`+
+      `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`+
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=10&timezone=auto`);
+    const c=j.current, [ic,col,desc]=wmo(c.weather_code);
+    $('w-icon').innerHTML=svg(ic); $('w-icon').style.color=col;
+    $('w-temp').innerHTML=`${Math.round(c.temperature_2m)}<span>°C</span>`;
+    $('w-desc').textContent=desc;
+    $('w-extra').innerHTML=`<span>${svg('drop')} ${c.relative_humidity_2m}%</span><span>${svg('wind')} ${Math.round(c.wind_speed_10m)} km/h</span>`;
+    let h='';
+    j.daily.time.slice(0,10).forEach((ds,i)=>{
+      const d=new Date(ds+'T00:00:00'), [ic2,col2]=wmo(j.daily.weather_code[i]);
+      h+=`<div class="fc"><b>${i===0?'Nay':DOW_S[d.getDay()]}</b><em>${d.getDate()}/${d.getMonth()+1}</em>
+        <span style="color:${col2};display:flex">${svg(ic2)}</span><div>${Math.round(j.daily.temperature_2m_max[i])}° <s>${Math.round(j.daily.temperature_2m_min[i])}°</s></div></div>`;
+    });
+    $('forecast').innerHTML=h;
+  }catch(e){
+    $('w-desc').textContent='Không tải được thời tiết — thử lại sau 30 giây';
+    setTimeout(loadWeather,30000);
+  }
+}
+loadWeather(); setInterval(loadWeather,10*60*1000);
+
+/* ================= Báo thức / Hẹn giờ ================= */
+let tSec=0,tTotal=0,tInt=null,alarmInt=null,audioCtx=null;
+const FULL=440;
+const fmt=s=>[Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');
+function ensureAudio(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+}
+function beep(){
+  ensureAudio();
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type='sine'; o.frequency.value=880;
+  g.gain.setValueAtTime(1,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.5);
+  o.start(); o.stop(audioCtx.currentTime+0.5);
+}
+function setBtn(icon,text,bg){ const b=$('t-main'); b.innerHTML=svg(icon)+'<span>'+text+'</span>'; b.style.background=bg; }
+function setStatus(txt,color){ const s=$('t-status'); s.textContent=txt; s.style.color=color||''; }
+function drawTimer(){
+  $('cd').textContent=fmt(tSec);
+  $('ring').style.strokeDashoffset=FULL-(tTotal>0?tSec/tTotal:0)*FULL;
+}
+function addTime(min){
+  if(alarmInt) return;
+  tSec+=min*60; tTotal=tInt?Math.max(tTotal,tSec):tSec;
+  drawTimer(); if(!tInt) setStatus('ĐÃ ĐẶT');
+}
+function resetTimer(){
+  clearInterval(tInt); clearInterval(alarmInt); tInt=alarmInt=null; tSec=tTotal=0; drawTimer();
+  $('ring').style.stroke='var(--accent)'; $('cd').style.color='';
+  setStatus('SẴN SÀNG'); setBtn('play','BẮT ĐẦU','var(--btn)');
+}
+function mainBtn(){
+  ensureAudio();
+  if(alarmInt){ resetTimer(); return; }
+  if(tInt){ clearInterval(tInt); tInt=null; setBtn('play','TIẾP TỤC','var(--warn)'); setStatus('TẠM DỪNG','var(--yellow)'); return; }
+  if(tSec<=0) return;
+  setBtn('pause','TẠM DỪNG','var(--warn)'); setStatus('ĐANG CHẠY','var(--accent)');
+  tInt=setInterval(()=>{ tSec--; drawTimer(); if(tSec<=0){ clearInterval(tInt); tInt=null; fire(); } },1000);
+}
+function fire(){
+  beep(); alarmInt=setInterval(beep,1000);
+  $('ring').style.stroke='var(--red)'; $('cd').style.color='var(--red)';
+  setStatus('HẾT GIỜ!','var(--red)'); setBtn('bell','TẮT BÁO THỨC','#dc2626');
+}
+setBtn('play','BẮT ĐẦU','var(--btn)');
+
+/* ================= YouTube (iframe thuần, không API key) + Trang chủ ================= */
+const onFile=location.protocol==='file:';
+let ytInit=false, queue=[], qIdx=-1, trendItems=[];
+const jget=(k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d }catch(e){ return d } };
+const jset=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} };
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const PRESETS=[
+  {id:'jfKfPfyJRdk',title:'Lofi Girl – lofi hip hop radio (24/7)'},
+  {id:'4xDzrJKXOOY',title:'Synthwave radio – beats to chill/game to (24/7)'}
+];
+const CHIPS=['Nhạc trẻ','Nhạc Bolero','Lofi chill','Nhạc EDM','Nhạc không lời','Nhạc vàng','Nhạc xe hơi'];
+const PIPED=['https://pipedapi.kavin.rocks','https://pipedapi.adminforge.de','https://api.piped.private.coffee'];
+const INVID=['https://inv.nadeko.net','https://yewtu.be','https://invidious.nerdvpn.de','https://invidious.f5.si'];
+
+function showMsg(h){ const m=$('yt-msg'); m.style.display=h?'block':'none'; m.innerHTML=h||''; }
+function note(t){ showMsg(t); clearTimeout(note.t); note.t=setTimeout(()=>{ if($('yt-msg').dataset.keep!=='1') showMsg(''); },3500); }
+
+/* ---- tìm kiếm / thịnh hành: hỏi song song nhiều máy chủ công cộng, máy nào trả lời trước thì dùng ---- */
+function fromPiped(j){
+  const a=Array.isArray(j)?j:(j&&j.items)||[];
+  return a.filter(x=>x.url&&x.url.includes('/watch?v=')&&!x.isShort).map(x=>({id:x.url.split('v=')[1].slice(0,11),title:x.title}));
+}
+function fromInv(a){
+  return (Array.isArray(a)?a:[]).filter(x=>x.videoId&&(!x.type||x.type==='video')&&!(x.lengthSeconds>0&&x.lengthSeconds<65)).map(x=>({id:x.videoId,title:x.title}));
+}
+function anyBackend(pPath,iPath){
+  const tasks=[...PIPED.map(b=>fetchJSON(b+pPath,8000).then(fromPiped)),...INVID.map(b=>fetchJSON(b+iPath,8000).then(fromInv))]
+    .map(t=>t.then(r=>{ if(!r.length) throw new Error('empty'); return r; }));
+  return Promise.any(tasks);
+}
+function kSearch(q){ const e=encodeURIComponent(q); return anyBackend('/search?q='+e+'&filter=videos','/api/v1/search?q='+e+'&type=video&region=VN'); }
+async function cachedSearch(q){
+  const key=q.trim().toLowerCase(), all=jget('yscache',{}), hit=all[key];
+  if(hit&&Date.now()-hit.t<12*3600e3) return hit.items;
+  try{
+    const items=await kSearch(q);
+    all[key]={t:Date.now(),items};
+    const ks=Object.keys(all); if(ks.length>15) ks.sort((a,b)=>all[a].t-all[b].t).slice(0,ks.length-15).forEach(k=>delete all[k]);
+    jset('yscache',all); return items;
+  }catch(e){ if(hit) return hit.items; throw e; }
+}
+async function loadTrend(){
+  const c=jget('ytrend',null);
+  if(c&&c.items&&c.items.length&&Date.now()-c.t<3600e3) return c.items;
+  let items=[];
+  try{ items=await anyBackend('/trending?region=VN','/api/v1/trending?region=VN&type=music'); }
+  catch(e){ try{ items=await kSearch('nhạc trẻ hay nhất'); }catch(e2){ if(c&&c.items) items=c.items; } }
+  if(items.length) jset('ytrend',{t:Date.now(),items});
+  return items;
+}
+
+/* ---- phát: bài được chọn + các bài sau nó trong danh sách (iframe tự chuyển bài) ---- */
+function recents(){ return jget('yrecent',[]); }
+function addRecent(it){
+  const r=recents().filter(x=>x.id!==it.id); r.unshift({id:it.id,title:it.title||''}); jset('yrecent',r.slice(0,20));
+}
+async function fillTitle(it){
+  try{
+    const r=await fetchJSON('https://noembed.com/embed?url='+encodeURIComponent('https://www.youtube.com/watch?v='+it.id),6000);
+    if(r&&r.title){ it.title=r.title; addRecent(it); renderSide(); }
+  }catch(e){}
+}
+function playQueue(items,idx){
+  if(!items||!items[idx]) return;
+  queue=items; qIdx=idx;
+  const it=items[idx];
+  addRecent(it); if(!it.title) fillTitle(it);
+  const rest=items.slice(idx+1,idx+26).map(x=>x.id);
+  let src=`https://www.youtube.com/embed/${it.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+  if(rest.length) src+='&playlist='+rest.join(',')+'&loop=1';
+  $('yt').src=src;
+  closeHome(); showMsg(''); renderSide();
+}
+function playItem(it){
+  if(it.list){
+    $('yt').src=`https://www.youtube.com/embed/videoseries?list=${it.list}&autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+    queue=[]; qIdx=-1; closeHome(); showMsg(''); renderSide();
+  }else playQueue([{id:it.id,title:it.title||''}],0);
+}
+function parseInput(v){
+  v=v.trim(); let m;
+  if((m=v.match(/[?&]list=([\w-]+)/))&&!/[?&]v=/.test(v)) return {list:m[1]};
+  if((m=v.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/))) return {id:m[1]};
+  if(/^[\w-]{11}$/.test(v)) return {id:v};
+  return null;
+}
+let searching=false;
+async function searchAndPlay(q){
+  q=(q||'').trim(); if(!q||searching) return;
+  searching=true; note('Đang tìm: '+esc(q)+' …');
+  try{
+    const items=(await cachedSearch(q)).slice(0,25);
+    $('q').value='';
+    playQueue(items,0);
+  }catch(e){
+    showMsg('Chưa tìm được (máy chủ tìm kiếm đang bận). Thử lại sau ít giây, hoặc dán link YouTube vào ô tìm kiếm.');
+  }
+  searching=false;
+}
+async function doSearch(){
+  const v=$('q').value.trim(); if(!v) return;
+  $('q').blur();
+  const d=parseInput(v);
+  if(d){ $('q').value=''; playItem(d); return; }
+  await searchAndPlay(v);
+}
+
+/* ---- danh sách bên phải ---- */
+function renderSide(){
+  const box=$('yt-side');
+  if(queue.length>1){
+    let h='<div class="side-title">Đang phát tiếp</div>';
+    queue.forEach((it,i)=>{ h+=`<div class="res${i===qIdx?' cur':''}" data-i="${i}"><img src="https://i.ytimg.com/vi/${it.id}/mqdefault.jpg" alt=""><div>${esc(it.title||it.id)}</div></div>`; });
+    box.innerHTML=h;
+    box.querySelectorAll('.res[data-i]').forEach(el=>el.onclick=()=>playQueue(queue,+el.dataset.i));
+  }else{
+    let h='<div class="side-title">Gợi ý</div>';
+    PRESETS.forEach((p,i)=>{ h+=`<div class="res preset" data-p="${i}">${svg('youtube')}<span>${esc(p.title)}</span></div>`; });
+    h+=`<div class="res preset" data-home="1">${svg('home')}<span>Mở Trang chủ</span></div>`;
+    box.innerHTML=h;
+    box.querySelectorAll('.preset[data-p]').forEach(el=>el.onclick=()=>playQueue(PRESETS,+el.dataset.p));
+    box.querySelector('[data-home]').onclick=openHome;
+  }
+}
+
+/* ---- Trang chủ ---- */
+function mkTile(it,onclick){
+  const d=document.createElement('div'); d.className='tile';
+  const img=document.createElement('img'); img.loading='lazy'; img.alt=''; img.src='https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg';
+  const t=document.createElement('div'); t.textContent=it.title||it.id;
+  d.append(img,t); d.onclick=onclick; return d;
+}
+function homeSection(title,items,pick){
+  if(!items||!items.length) return;
+  const h=$('home'), h4=document.createElement('h4'); h4.textContent=title; h.appendChild(h4);
+  const g=document.createElement('div'); g.className='grid';
+  items.forEach((it,i)=>g.appendChild(mkTile(it,()=>pick(items,i))));
+  h.appendChild(g);
+}
+function renderHome(){
+  const h=$('home'); h.innerHTML='';
+  const top=document.createElement('div'); top.id='homeTop';
+  const b=document.createElement('span'); b.innerHTML=svg('youtube')+' YouTube';
+  const x=document.createElement('button'); x.textContent='Đóng'; x.onclick=closeHome;
+  top.append(b,x); h.appendChild(top);
+
+  const c=document.createElement('div'); c.className='chips';
+  CHIPS.forEach(k=>{ const bt=document.createElement('button'); bt.textContent=k; bt.onclick=()=>searchAndPlay(k); c.appendChild(bt); });
+  h.appendChild(c);
+  const p=document.createElement('div'); p.className='hint';
+  p.textContent='Chạm một thể loại để phát ngay, hoặc chọn bài bên dưới. Có thể gõ tên bài / ca sĩ, hoặc dán link YouTube ở ô tìm kiếm phía trên.';
+  h.appendChild(p);
+  homeSection('Nghe gần đây',recents(),playQueue);
+  homeSection('Thịnh hành (Việt Nam)',trendItems,playQueue);
+  homeSection('Gợi ý',PRESETS,playQueue);
+}
+function openHome(){
+  renderHome(); $('home').classList.add('open');
+  loadTrend().then(items=>{ if(items&&items.length){ trendItems=items; if($('home').classList.contains('open')) renderHome(); } }).catch(()=>{});
+}
+function closeHome(){ $('home').classList.remove('open'); }
+function toggleHome(){ $('home').classList.contains('open')?closeHome():openHome(); }
+
+function initYT(){
+  if(ytInit) return; ytInit=true;
+  renderSide();
+  if(onFile){
+    $('yt-msg').dataset.keep='1';
+    showMsg(svg('warn')+' Đang mở file trực tiếp (file://) nên YouTube có thể báo lỗi 153. Hãy mở qua http/https (GitHub Pages, Netlify hoặc localhost).');
+  }
+  openHome();   // mở thẳng Trang chủ khi vào trang YouTube lần đầu
+}
+(function edgeSwipe(){
+  const e=$('edge'); let sx=null;
+  e.addEventListener('touchstart',ev=>{sx=ev.touches[0].clientX},{passive:true});
+  e.addEventListener('touchend',ev=>{ if(sx!==null&&ev.changedTouches[0].clientX-sx>40) goPage(0); sx=null; },{passive:true});
+  e.addEventListener('click',()=>goPage(0));
+})();
+</script>
+</body>
+</html>
